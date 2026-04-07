@@ -1,7 +1,7 @@
 <?php
 require_once 'database.php';
 
-// Contadores para o dashboard
+// Contador para o dashboard
 $countUsuarios = $pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
 $countAlunos = $pdo->query("SELECT COUNT(*) FROM alunos")->fetchColumn();
 $countTurmas = $pdo->query("SELECT COUNT(*) FROM turmas")->fetchColumn();

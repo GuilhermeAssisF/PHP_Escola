@@ -5,7 +5,7 @@ $msg = '';
 $msgType = '';
 $editData = null;
 
-// Processar ações
+// Processa ações
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
