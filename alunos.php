@@ -66,7 +66,7 @@ $alunos = $pdo->query("SELECT * FROM alunos ORDER BY id DESC")->fetchAll();
         </div>
     <?php endif; ?>
 
-    <!-- Formulário -->
+    <!-- Formulário WEB-->
     <div class="card">
         <h3 class="card-title"><?= $editData ? '✏️ Editar Aluno' : '➕ Novo Aluno' ?></h3>
         <form method="POST">
