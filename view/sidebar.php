@@ -48,6 +48,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <span class="nav-icon">📝</span> <span>Avaliações</span>
             </a>
         </li>
+        <li class="logout-item">
+            <a href="../logout.php" class="logout-link">
+                <span class="nav-icon">⏏️</span> <span>Logout</span>
+            </a>
+        </li>
     </ul>
 </nav>
 

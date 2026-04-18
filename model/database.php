@@ -16,14 +16,24 @@ function initDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome VARCHAR(45) NOT NULL,
         email VARCHAR(100) NOT NULL UNIQUE,
-        senha VARCHAR(45) NOT NULL,
+        senha TEXT NOT NULL,
         perfil TEXT CHECK(perfil IN ('admin','professor')) NOT NULL
     )");
 
     $existingUsers = $pdo->query('SELECT COUNT(*) FROM usuarios')->fetchColumn();
     if ($existingUsers == 0) {
         $stmt = $pdo->prepare('INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)');
-        $stmt->execute(['Administrador', 'admin@escola.com', 'admin123', 'admin']);
+        $stmt->execute(['Administrador', 'admin@escola.com', password_hash('admin123', PASSWORD_DEFAULT), 'admin']);
+    }
+
+    $stmt = $pdo->query('SELECT id, senha FROM usuarios');
+    $users = $stmt->fetchAll();
+    $update = $pdo->prepare('UPDATE usuarios SET senha = ? WHERE id = ?');
+    foreach ($users as $user) {
+        $senha = $user['senha'];
+        if (password_get_info($senha)['algo'] === 0) {
+            $update->execute([password_hash($senha, PASSWORD_DEFAULT), $user['id']]);
+        }
     }
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS alunos (

@@ -11,13 +11,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($action === 'create') {
+            $hashedPassword = password_hash($_POST['senha'], PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$_POST['nome'], $_POST['email'], $_POST['senha'], $_POST['perfil']]);
+            $stmt->execute([$_POST['nome'], $_POST['email'], $hashedPassword, $_POST['perfil']]);
             $msg = 'Usuário criado com sucesso!';
             $msgType = 'success';
         } elseif ($action === 'update') {
+            $senha = trim($_POST['senha'] ?? '');
+            if ($senha === '') {
+                $stmt = $pdo->prepare("SELECT senha FROM usuarios WHERE id = ?");
+                $stmt->execute([$_POST['id']]);
+                $senhaHash = $stmt->fetchColumn();
+            } else {
+                $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+            }
             $stmt = $pdo->prepare("UPDATE usuarios SET nome = ?, email = ?, senha = ?, perfil = ? WHERE id = ?");
-            $stmt->execute([$_POST['nome'], $_POST['email'], $_POST['senha'], $_POST['perfil'], $_POST['id']]);
+            $stmt->execute([$_POST['nome'], $_POST['email'], $senhaHash, $_POST['perfil'], $_POST['id']]);
             $msg = 'Usuário atualizado com sucesso!';
             $msgType = 'success';
         } elseif ($action === 'delete') {
@@ -85,7 +94,10 @@ $usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY id DESC")->fetchAll();
                 </div>
                 <div class="form-group">
                     <label>Senha</label>
-                    <input type="password" name="senha" required placeholder="•••••••" value="<?= htmlspecialchars($editData['senha'] ?? '') ?>">
+                    <input type="password" name="senha" placeholder="•••••••">
+                    <?php if ($editData): ?>
+                        <small>Deixe em branco para manter a senha atual.</small>
+                    <?php endif; ?>
                 </div>
                 <div class="form-group">
                     <label>Perfil</label>

@@ -12,11 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = 'Preencha email e senha.';
         $msgType = 'danger';
     } else {
-        $stmt = $pdo->prepare('SELECT * FROM usuarios WHERE email = ? AND senha = ?');
-        $stmt->execute([$email, $senha]);
+        $stmt = $pdo->prepare('SELECT * FROM usuarios WHERE email = ?');
+        $stmt->execute([$email]);
         $usuario = $stmt->fetch();
 
-        if ($usuario) {
+        if ($usuario && password_verify($senha, $usuario['senha'])) {
             header('Location: /view/dashboard.php');
             exit;
         } else {
@@ -63,10 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="btn-group">
                 <button type="submit" class="btn btn-primary">Entrar</button>
+                <a href="register.php" class="btn btn-primary" style="margin-left: 16px;">Criar conta</a>
             </div>
         </form>
-        <div class="alert alert-info" style="margin-top: 16px;">
-            Usuário de teste: <strong>admin@escola.com</strong> / <strong>admin123</strong>
+        <div class="helper-links" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
         </div>
     </div>
 </div>

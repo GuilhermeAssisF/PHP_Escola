@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/model/database.php';
+require_once __DIR__ . '/../model/database.php';
+$pdo = getConnection();
 
 $msg = '';
 $msgType = '';
@@ -37,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Usuário — Sistema Escolar</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
 <div class="main-content" style="max-width: 600px; margin: 40px auto;">
     <div class="page-header">
         <h1>➕ Cadastro de Usuário</h1>
-        <p>Crie um novo usuário para acessar o sistema.</p>
+        <p>Crie uma conta para acessar o sistema.</p>
     </div>
 
     <?php if ($msg): ?>
@@ -72,14 +73,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-group">
                     <label>Perfil</label>
                     <select name="perfil" required>
+                        <option value="professor" <?= (($_POST['perfil'] ?? '') === 'professor') ? 'selected' : '' ?>>Professor</option>
                         <option value="admin" <?= (($_POST['perfil'] ?? '') === 'admin') ? 'selected' : '' ?>>Admin</option>
-                        <option value="professor" <?= (($_POST['perfil'] ?? '') === 'professor' || ($_POST['perfil'] ?? '') === '') ? 'selected' : '' ?>>Professor</option>
                     </select>
                 </div>
             </div>
             <div class="btn-group">
                 <button type="submit" class="btn btn-primary">Cadastrar usuário</button>
-                <a href="index.php" class="btn btn-secondary">Voltar ao login</a>
+                <a href="index.php" class="btn btn-primary">Voltar ao login</a>
             </div>
         </form>
     </div>
