@@ -1,5 +1,5 @@
 <?php
-require_once 'database.php';
+require_once __DIR__ . '/../model/database.php';
 
 $msg = '';
 $msgType = '';
@@ -11,19 +11,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($action === 'create') {
-            $stmt = $pdo->prepare("INSERT INTO turma_aluno (turma_id, aluno_id) VALUES (?, ?)");
-            $stmt->execute([$_POST['turma_id'], $_POST['aluno_id']]);
-            $msg = 'Vínculo criado com sucesso!';
+            $stmt = $pdo->prepare("INSERT INTO alocacoes (usuario_id, turma_id, disciplina_id) VALUES (?, ?, ?)");
+            $stmt->execute([$_POST['usuario_id'], $_POST['turma_id'], $_POST['disciplina_id']]);
+            $msg = 'Alocação criada com sucesso!';
             $msgType = 'success';
         } elseif ($action === 'update') {
-            $stmt = $pdo->prepare("UPDATE turma_aluno SET turma_id = ?, aluno_id = ? WHERE id = ?");
-            $stmt->execute([$_POST['turma_id'], $_POST['aluno_id'], $_POST['id']]);
-            $msg = 'Vínculo atualizado com sucesso!';
+            $stmt = $pdo->prepare("UPDATE alocacoes SET usuario_id = ?, turma_id = ?, disciplina_id = ? WHERE id = ?");
+            $stmt->execute([$_POST['usuario_id'], $_POST['turma_id'], $_POST['disciplina_id'], $_POST['id']]);
+            $msg = 'Alocação atualizada com sucesso!';
             $msgType = 'success';
         } elseif ($action === 'delete') {
-            $stmt = $pdo->prepare("DELETE FROM turma_aluno WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM alocacoes WHERE id = ?");
             $stmt->execute([$_POST['id']]);
-            $msg = 'Vínculo excluído com sucesso!';
+            $msg = 'Alocação excluída com sucesso!';
             $msgType = 'success';
         }
     } catch (PDOException $e) {
@@ -34,40 +34,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Carregar dados para edição
 if (isset($_GET['edit'])) {
-    $stmt = $pdo->prepare("SELECT * FROM turma_aluno WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT * FROM alocacoes WHERE id = ?");
     $stmt->execute([$_GET['edit']]);
     $editData = $stmt->fetch();
 }
 
 // Listar todos com JOIN
 $registros = $pdo->query("
-    SELECT ta.id, ta.turma_id, ta.aluno_id, t.nome AS turma_nome, a.nome AS aluno_nome, a.matricula
-    FROM turma_aluno ta
-    JOIN turmas t ON ta.turma_id = t.id
-    JOIN alunos a ON ta.aluno_id = a.id
-    ORDER BY ta.id DESC
+    SELECT al.id, al.usuario_id, al.turma_id, al.disciplina_id,
+           u.nome AS usuario_nome, t.nome AS turma_nome, d.nome AS disciplina_nome
+    FROM alocacoes al
+    JOIN usuarios u ON al.usuario_id = u.id
+    JOIN turmas t ON al.turma_id = t.id
+    JOIN disciplinas d ON al.disciplina_id = d.id
+    ORDER BY al.id DESC
 ")->fetchAll();
 
 // Dados para selects
+$usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY nome")->fetchAll();
 $turmas = $pdo->query("SELECT * FROM turmas ORDER BY nome")->fetchAll();
-$alunos = $pdo->query("SELECT * FROM alunos ORDER BY nome")->fetchAll();
+$disciplinas = $pdo->query("SELECT * FROM disciplinas ORDER BY nome")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turma-Aluno — Sistema Escolar</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Alocações — Sistema Escolar</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
-<?php include 'sidebar.php'; ?>
+<?php include __DIR__ . '/sidebar.php'; ?>
 
 <div class="main-content">
     <div class="page-header">
-        <h1>🔗 Turma-Aluno</h1>
-        <p>Vincular alunos às turmas</p>
+        <h1>📋 Alocações</h1>
+        <p>Vincular professores a turmas e disciplinas</p>
     </div>
 
     <?php if ($msg): ?>
@@ -78,13 +81,24 @@ $alunos = $pdo->query("SELECT * FROM alunos ORDER BY nome")->fetchAll();
 
     <!-- Formulário -->
     <div class="card">
-        <h3 class="card-title"><?= $editData ? '✏️ Editar Vínculo' : '➕ Novo Vínculo' ?></h3>
+        <h3 class="card-title"><?= $editData ? '✏️ Editar Alocação' : '➕ Nova Alocação' ?></h3>
         <form method="POST">
             <input type="hidden" name="action" value="<?= $editData ? 'update' : 'create' ?>">
             <?php if ($editData): ?>
                 <input type="hidden" name="id" value="<?= $editData['id'] ?>">
             <?php endif; ?>
             <div class="form-grid">
+                <div class="form-group">
+                    <label>Professor / Usuário</label>
+                    <select name="usuario_id" required>
+                        <option value="">Selecione o professor...</option>
+                        <?php foreach ($usuarios as $u): ?>
+                            <option value="<?= $u['id'] ?>" <?= ($editData['usuario_id'] ?? '') == $u['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($u['nome']) ?> (<?= $u['perfil'] ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Turma</label>
                     <select name="turma_id" required>
@@ -97,21 +111,21 @@ $alunos = $pdo->query("SELECT * FROM alunos ORDER BY nome")->fetchAll();
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Aluno</label>
-                    <select name="aluno_id" required>
-                        <option value="">Selecione o aluno...</option>
-                        <?php foreach ($alunos as $a): ?>
-                            <option value="<?= $a['id'] ?>" <?= ($editData['aluno_id'] ?? '') == $a['id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($a['nome']) ?> (<?= $a['matricula'] ?>)
+                    <label>Disciplina</label>
+                    <select name="disciplina_id" required>
+                        <option value="">Selecione a disciplina...</option>
+                        <?php foreach ($disciplinas as $d): ?>
+                            <option value="<?= $d['id'] ?>" <?= ($editData['disciplina_id'] ?? '') == $d['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($d['nome']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
             </div>
             <div class="btn-group">
-                <button type="submit" class="btn btn-primary"><?= $editData ? '💾 Atualizar' : '➕ Vincular' ?></button>
+                <button type="submit" class="btn btn-primary"><?= $editData ? '💾 Atualizar' : '➕ Cadastrar' ?></button>
                 <?php if ($editData): ?>
-                    <a href="turma_aluno.php" class="btn btn-danger">Cancelar</a>
+                    <a href="alocacoes.php" class="btn btn-danger">Cancelar</a>
                 <?php endif; ?>
             </div>
         </form>
@@ -119,11 +133,11 @@ $alunos = $pdo->query("SELECT * FROM alunos ORDER BY nome")->fetchAll();
 
     <!-- Tabela -->
     <div class="card">
-        <h3 class="card-title">📋 Vínculos Turma-Aluno</h3>
+        <h3 class="card-title">📋 Lista de Alocações</h3>
         <?php if (empty($registros)): ?>
             <div class="empty-state">
-                <div class="empty-icon">🔗</div>
-                <p>Nenhum vínculo cadastrado ainda.</p>
+                <div class="empty-icon">📋</div>
+                <p>Nenhuma alocação cadastrada ainda.</p>
             </div>
         <?php else: ?>
             <div class="table-wrapper">
@@ -131,9 +145,9 @@ $alunos = $pdo->query("SELECT * FROM alunos ORDER BY nome")->fetchAll();
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Professor</th>
                             <th>Turma</th>
-                            <th>Aluno</th>
-                            <th>Matrícula</th>
+                            <th>Disciplina</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -141,12 +155,12 @@ $alunos = $pdo->query("SELECT * FROM alunos ORDER BY nome")->fetchAll();
                         <?php foreach ($registros as $r): ?>
                         <tr>
                             <td><?= $r['id'] ?></td>
+                            <td><?= htmlspecialchars($r['usuario_nome']) ?></td>
                             <td><?= htmlspecialchars($r['turma_nome']) ?></td>
-                            <td><?= htmlspecialchars($r['aluno_nome']) ?></td>
-                            <td><?= htmlspecialchars($r['matricula']) ?></td>
+                            <td><?= htmlspecialchars($r['disciplina_nome']) ?></td>
                             <td class="actions">
-                                <a href="turma_aluno.php?edit=<?= $r['id'] ?>" class="btn btn-primary btn-sm">✏️ Editar</a>
-                                <form method="POST" style="display:inline" onsubmit="return confirm('Deseja excluir este vínculo?')">
+                                <a href="alocacoes.php?edit=<?= $r['id'] ?>" class="btn btn-primary btn-sm">✏️ Editar</a>
+                                <form method="POST" style="display:inline" onsubmit="return confirm('Deseja excluir esta alocação?')">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="id" value="<?= $r['id'] ?>">
                                     <button type="submit" class="btn btn-danger btn-sm">🗑️ Excluir</button>
@@ -163,3 +177,4 @@ $alunos = $pdo->query("SELECT * FROM alunos ORDER BY nome")->fetchAll();
 
 </body>
 </html>
+

@@ -50,3 +50,4 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </li>
     </ul>
 </nav>
+

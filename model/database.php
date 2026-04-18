@@ -20,6 +20,12 @@ function initDatabase() {
         perfil TEXT CHECK(perfil IN ('admin','professor')) NOT NULL
     )");
 
+    $existingUsers = $pdo->query('SELECT COUNT(*) FROM usuarios')->fetchColumn();
+    if ($existingUsers == 0) {
+        $stmt = $pdo->prepare('INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)');
+        $stmt->execute(['Administrador', 'admin@escola.com', 'admin123', 'admin']);
+    }
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS alunos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         matricula VARCHAR(45) NOT NULL UNIQUE,

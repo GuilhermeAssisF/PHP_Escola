@@ -1,5 +1,5 @@
 <?php
-require_once 'database.php';
+require_once __DIR__ . '/../model/database.php';
 
 $msg = '';
 $msgType = '';
@@ -48,11 +48,11 @@ $disciplinas = $pdo->query("SELECT * FROM disciplinas ORDER BY id DESC")->fetchA
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disciplinas — Sistema Escolar</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
-<?php include 'sidebar.php'; ?>
+<?php include __DIR__ . '/sidebar.php'; ?>
 
 <div class="main-content">
     <div class="page-header">
@@ -131,3 +131,4 @@ $disciplinas = $pdo->query("SELECT * FROM disciplinas ORDER BY id DESC")->fetchA
 
 </body>
 </html>
+
