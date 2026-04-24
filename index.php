@@ -2,6 +2,7 @@
 // ===== Front Controller (Roteador MVC) =====
 session_start();
 
+<<<<<<< HEAD
 // Carrega o banco de dados
 require_once __DIR__ . '/app/config/database.php';
 
@@ -126,4 +127,13 @@ switch ($page) {
         $controller->index();
         break;
 }
+=======
+// Contador para o dashboard
+$countUsuarios = $pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
+$countAlunos = $pdo->query("SELECT COUNT(*) FROM alunos")->fetchColumn();
+$countTurmas = $pdo->query("SELECT COUNT(*) FROM turmas")->fetchColumn();
+$countDisciplinas = $pdo->query("SELECT COUNT(*) FROM disciplinas")->fetchColumn();
+$countAlocacoes = $pdo->query("SELECT COUNT(*) FROM alocacoes")->fetchColumn();
+$countAvaliacoes = $pdo->query("SELECT COUNT(*) FROM avaliacoes")->fetchColumn();
+>>>>>>> 6d1e5012f0b181d53e3212eb1f43ac13bafd491f
 ?>

@@ -11,6 +11,10 @@
         </div>
     <?php endif; ?>
 
+<<<<<<< HEAD:app/views/alunos/index.php
+=======
+    <!-- Formulário WEB-->
+>>>>>>> 6d1e5012f0b181d53e3212eb1f43ac13bafd491f:alunos.php
     <div class="card">
         <h3 class="card-title"><?= $editData ? '✏️ Editar Aluno' : '➕ Novo Aluno' ?></h3>
         <form method="POST" action="index.php?page=alunos">
