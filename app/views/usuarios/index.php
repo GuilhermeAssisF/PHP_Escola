@@ -1,59 +1,4 @@
-<?php
-require_once 'database.php';
-
-$msg = '';
-$msgType = '';
-$editData = null;
-
-// Processar ações
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-
-    try {
-        if ($action === 'create') {
-            $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$_POST['nome'], $_POST['email'], $_POST['senha'], $_POST['perfil']]);
-            $msg = 'Usuário criado com sucesso!';
-            $msgType = 'success';
-        } elseif ($action === 'update') {
-            $stmt = $pdo->prepare("UPDATE usuarios SET nome = ?, email = ?, senha = ?, perfil = ? WHERE id = ?");
-            $stmt->execute([$_POST['nome'], $_POST['email'], $_POST['senha'], $_POST['perfil'], $_POST['id']]);
-            $msg = 'Usuário atualizado com sucesso!';
-            $msgType = 'success';
-        } elseif ($action === 'delete') {
-            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
-            $stmt->execute([$_POST['id']]);
-            $msg = 'Usuário excluído com sucesso!';
-            $msgType = 'success';
-        }
-    } catch (PDOException $e) {
-        $msg = 'Erro: ' . $e->getMessage();
-        $msgType = 'danger';
-    }
-}
-
-// Carregar dados para edição
-if (isset($_GET['edit'])) {
-    $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE id = ?");
-    $stmt->execute([$_GET['edit']]);
-    $editData = $stmt->fetch();
-}
-
-// Listar todos
-$usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY id DESC")->fetchAll();
-?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usuários — Sistema Escolar</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<?php include 'sidebar.php'; ?>
-
+<?php $pageTitle = 'Usuários — Sistema Escolar'; ?>
 <div class="main-content">
     <div class="page-header">
         <h1>👤 Usuários</h1>
@@ -69,7 +14,7 @@ $usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY id DESC")->fetchAll();
     <!-- Formulário -->
     <div class="card">
         <h3 class="card-title"><?= $editData ? '✏️ Editar Usuário' : '➕ Novo Usuário' ?></h3>
-        <form method="POST">
+        <form method="POST" action="index.php?page=usuarios">
             <input type="hidden" name="action" value="<?= $editData ? 'update' : 'create' ?>">
             <?php if ($editData): ?>
                 <input type="hidden" name="id" value="<?= $editData['id'] ?>">
@@ -84,8 +29,8 @@ $usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY id DESC")->fetchAll();
                     <input type="email" name="email" required placeholder="email@exemplo.com" value="<?= htmlspecialchars($editData['email'] ?? '') ?>">
                 </div>
                 <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" name="senha" required placeholder="•••••••" value="<?= htmlspecialchars($editData['senha'] ?? '') ?>">
+                    <label>Senha <?= $editData ? '(deixe vazio para manter)' : '' ?></label>
+                    <input type="password" name="senha" <?= $editData ? '' : 'required' ?> placeholder="•••••••">
                 </div>
                 <div class="form-group">
                     <label>Perfil</label>
@@ -99,7 +44,7 @@ $usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY id DESC")->fetchAll();
             <div class="btn-group">
                 <button type="submit" class="btn btn-primary"><?= $editData ? '💾 Atualizar' : '➕ Cadastrar' ?></button>
                 <?php if ($editData): ?>
-                    <a href="usuarios.php" class="btn btn-danger">Cancelar</a>
+                    <a href="index.php?page=usuarios" class="btn btn-danger">Cancelar</a>
                 <?php endif; ?>
             </div>
         </form>
@@ -133,8 +78,8 @@ $usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY id DESC")->fetchAll();
                             <td><?= htmlspecialchars($u['email']) ?></td>
                             <td><span class="badge badge-<?= $u['perfil'] ?>"><?= $u['perfil'] ?></span></td>
                             <td class="actions">
-                                <a href="usuarios.php?edit=<?= $u['id'] ?>" class="btn btn-primary btn-sm">✏️ Editar</a>
-                                <form method="POST" style="display:inline" onsubmit="return confirm('Deseja excluir este usuário?')">
+                                <a href="index.php?page=usuarios&edit=<?= $u['id'] ?>" class="btn btn-primary btn-sm">✏️ Editar</a>
+                                <form method="POST" action="index.php?page=usuarios" style="display:inline" onsubmit="return confirm('Deseja excluir este usuário?')">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="id" value="<?= $u['id'] ?>">
                                     <button type="submit" class="btn btn-danger btn-sm">🗑️ Excluir</button>
@@ -148,6 +93,3 @@ $usuarios = $pdo->query("SELECT * FROM usuarios ORDER BY id DESC")->fetchAll();
         <?php endif; ?>
     </div>
 </div>
-
-</body>
-</html>

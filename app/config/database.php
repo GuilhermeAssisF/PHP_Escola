@@ -1,22 +1,27 @@
 <?php
-// Conexão com SQLite via PDO
+// ===== Configuração do Banco de Dados (PDO SQLite) =====
+
 function getConnection() {
-    $dbPath = __DIR__ . '/database.sqlite';
-    $pdo = new PDO('sqlite:' . $dbPath);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $pdo->exec('PRAGMA foreign_keys = ON');
+    static $pdo = null;
+    if ($pdo === null) {
+        $dbPath = dirname(__DIR__, 2) . '/database.sqlite';
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $pdo->exec('PRAGMA foreign_keys = ON');
+    }
     return $pdo;
 }
 
 function initDatabase() {
     $pdo = getConnection();
 
+    // Criar tabelas
     $pdo->exec("CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome VARCHAR(45) NOT NULL,
+        nome VARCHAR(100) NOT NULL,
         email VARCHAR(100) NOT NULL UNIQUE,
-        senha VARCHAR(45) NOT NULL,
+        senha VARCHAR(255) NOT NULL,
         perfil TEXT CHECK(perfil IN ('admin','professor')) NOT NULL
     )");
 
@@ -67,9 +72,28 @@ function initDatabase() {
         FOREIGN KEY (alocacao_id) REFERENCES alocacoes(id) ON DELETE CASCADE
     )");
 
+    // Migrar senhas em texto puro para bcrypt
+    $usuarios = $pdo->query("SELECT id, senha FROM usuarios")->fetchAll();
+    foreach ($usuarios as $u) {
+        // Se a senha tem menos de 60 caracteres, não é bcrypt
+        if (strlen($u['senha']) < 60) {
+            $hash = password_hash($u['senha'], PASSWORD_BCRYPT);
+            $stmt = $pdo->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
+            $stmt->execute([$hash, $u['id']]);
+        }
+    }
+
+    // Criar admin padrão se não existir nenhum usuário
+    $count = $pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
+    if ($count == 0) {
+        $hash = password_hash('admin123', PASSWORD_BCRYPT);
+        $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)");
+        $stmt->execute(['Administrador', 'admin@escola.com', $hash, 'admin']);
+    }
+
     return $pdo;
 }
 
-// Inicializa o banco automaticamente ao incluir este arquivo
+// Inicializa o banco automaticamente
 $pdo = initDatabase();
 ?>
